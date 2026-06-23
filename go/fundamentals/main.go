@@ -1,6 +1,12 @@
 package main
 
+
 import "fmt"
+
+import (
+	"engineering_playbook/fundamentals/lund"
+)
+
 
 func main() {
 
@@ -16,14 +22,17 @@ func main() {
 	fmt.Println("Welcome to our", programName)
 	fmt.Printf("We have limited number of ticket : %v\n", totalTickets)
 	fmt.Println("Available tickets:", remainingTickets)
-
-	//a new user comes must have a username and usermail
+	LundChota()
+	chut()
+	Lund()
+	lund.Hello()
+	//a new user comes must have a username
 
 	var userName string
-	var userTickets int
+	
 
 	userName = "Tanishk"
-	userTickets = 50
+	userTickets := 50
 
 	fmt.Println(userName)
 	fmt.Println(userTickets)
