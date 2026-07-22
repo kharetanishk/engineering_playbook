@@ -3,7 +3,8 @@ function check(n){
 }
 
 const p = new Promise((res , rej)=>{
-   check("tanishk") ? res("promise resolved") : rej("promise rejected")
+    res("hello world")
+    rej("hello world rejected ")
 })
 
 fetchdata = async()=>{
