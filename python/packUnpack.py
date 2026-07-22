@@ -50,4 +50,11 @@ add(1,2,3,4,5,5)
 
 def dicdata(**data):
     print(data)
-dicdata(name="tanishk" , age=22 , hobbie=["playing cricket" , "coding.."])
+dicdata(name="tanishk" , age=22 , hobbie=["playing cricket" , "coding.."])#this iwill give out dictionary
+
+# ⭐ One Important Rule
+# Syntax	Type
+# *args	tuple
+# **kwargs	dict
+# *rest (unpacking)	list
+
