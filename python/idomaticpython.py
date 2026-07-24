@@ -129,3 +129,18 @@ def greet():
     print("hello world")
 
 greet()
+
+#type hint
+list_of_integers : list[int] = [1,2,3,4,]
+
+
+
+dict_with_type : dict[str,float] = {
+    "marks" : 90.0,
+}
+
+integer : int | None = None
+
+
+def greet(name: str)-> str:
+    return f"Hello {name}"
