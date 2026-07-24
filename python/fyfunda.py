@@ -1,9 +1,12 @@
-#keyword only and positional only parameters
+# keyword only and positional only parameters
 
-def greet(name , age):
+
+def greet(name, age):
     return f"Hello {name}, you are {age} years old"
-greet(age=22,name="tanishk")
-greet("tanishk",22)
+
+
+greet(age=22, name="tanishk")
+greet("tanishk", 22)
 
 
 # Keyword-only Parameters
@@ -52,11 +55,13 @@ greet("tanishk",22)
 # Everything before me is positional only.
 
 
-def addItems(item , items=None):
+def addItems(item, items=None):
     if items is None:
-        items=[]
+        items = []
     items.append(item)
     return items
+
+
 print(addItems(1))
 print(addItems(2))
 print(addItems(3))

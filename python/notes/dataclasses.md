@@ -70,3 +70,15 @@ Without dataclasses, you'd manually assign all 15 in __init__.
 With @dataclass, you just declare the fields.
 
 @dataclass automatically generates boilerplate methods like __init__(), __repr__(), and __eq__() based on the fields you define, allowing you to write much less code.
+
+Iterable
+
+An object you can loop over.
+Iterator
+
+An object that produces values one at a time.
+
+
+iter() - makes the iterable ->  iterator
+next() - returns the next value of the iterator
+generator is an iterator

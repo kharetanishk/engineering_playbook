@@ -17,3 +17,4 @@ fetchdata = async()=>{
 fetchdata()
 
 console.log("hello world")
+
