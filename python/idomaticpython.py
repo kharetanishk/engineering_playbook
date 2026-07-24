@@ -85,3 +85,21 @@ add_10_2 = {
     for sub , score in scores.items()
 }
 print(add_10_2)
+
+logs_of_million = (f"Log entry {i}" for i in range(1000000))
+
+print(logs_of_million)
+
+#generatrors and yield
+
+#generators are used to save memory and time and generate and give values
+#when asked , they are used to read logs of big files and also in case infinite sequences
+
+
+#wheneve yield is called generator function is paused and the value is returned to the caller and when next is called the function resumes from where it left off
+def numbers():
+    for i in range(10):
+        yield i
+
+gen = numbers()
+print(next(gen))
