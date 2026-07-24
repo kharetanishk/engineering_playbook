@@ -20,7 +20,7 @@ ruff check
 mypy
       │
       ▼
-pytest
+pytest   uv run python -m pytest
       │
       ▼
 Git Push
