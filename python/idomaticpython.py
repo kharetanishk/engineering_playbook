@@ -99,7 +99,33 @@ print(logs_of_million)
 #wheneve yield is called generator function is paused and the value is returned to the caller and when next is called the function resumes from where it left off
 def numbers():
     for i in range(10):
-        yield i
+        yield i#Key point: yield pauses the function. The next next() resumes from exactly where it stopped.
 
 gen = numbers()
 print(next(gen))
+print(next(gen))\
+# ✅ Generator Complete
+
+# Remember:
+
+# return → function ends.
+# yield → function pauses.
+
+#decorators
+
+def logger(func):
+    def wrapper():
+        print("function execution started")
+        func()
+        print("function execution stopped")
+
+    return wrapper
+
+
+
+#usage
+@logger
+def greet():
+    print("hello world")
+
+greet()
