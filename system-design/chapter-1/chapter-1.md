@@ -5,6 +5,30 @@
 > Goal of the chapter: start with one server, then add one building block at a time
 > until the system can serve millions of users.
 
+## Contents
+
+1. [Basic System Architecture](#1-basic-system-architecture)
+2. [DNS](#2-dns)
+3. [HTTP](#3-http)
+4. [Web Tier](#4-web-tier)
+5. [Load Balancer](#5-load-balancer)
+6. [Database](#6-database)
+7. [SQL vs NoSQL](#7-sql-vs-nosql)
+8. [ORM](#8-orm)
+9. [Serialization / Deserialization](#9-serialization--deserialization)
+10. [Sharding](#10-sharding)
+11. [Sharding Challenges](#11-sharding-challenges)
+12. [Normalization vs Denormalization](#12-normalization-vs-denormalization)
+13. [Replication](#13-replication)
+14. [Multi-Data Center](#14-multi-data-center)
+15. [Stateless Web Tier](#15-stateless-web-tier)
+16. [Cache](#16-cache)
+17. [CDN](#17-cdn)
+18. [Message Queue](#18-message-queue)
+19. [Async / Await / Threads / Processes](#19-async--await--threads--processes)
+20. [System Scaling Summary](#20-system-scaling-summary)
+21. [Interview Cheat Sheet](#21-interview-cheat-sheet)
+
 ---
 
 ## 1. Basic System Architecture
@@ -473,7 +497,7 @@ Denormalized:
  posts:  { id: 99, user_id: 1, author_name: "Asha", text: "hello" }
 
  Show post with author → one read, no join
- Cost: if Asha renames herself, every post copy must be updated
+ Cost: if Asha's name changes, every post copy must be updated
 ```
 
 Rule of thumb: **normalize by default**, denormalize the specific **read-heavy** paths that need it.
@@ -641,10 +665,10 @@ makes balancing uneven and breaks when that server dies.
 **Cache** = a fast, usually **in-memory** storage layer that keeps frequently used data
 so we don't hit the database every time. Examples: Redis, Memcached.
 
-- Memory is ~100× faster than disk-backed DB queries.
+- Reading from memory is much faster than a disk-backed DB query.
 - The **DB stays the source of truth**; cache is a disposable copy.
 
-### Read-through / cache-aside flow
+### Cache-aside flow
 
 ```
  Request
@@ -865,3 +889,118 @@ Fixes: move it to a **worker thread**, a **separate process**, or a **queue + wo
 > - Thread = execution path inside a process
 > - Queue = buffer between services
 > - Multiple workers = parallel processing capacity
+
+---
+
+## 20. System Scaling Summary
+
+How the architecture grows, step by step:
+
+```
+ 1 server
+   → split web tier / data tier
+   → load balancer + many web servers
+   → DB replication (primary + read replicas)
+   → cache + CDN
+   → stateless web tier (shared session store)
+   → multiple data centers
+   → message queues + workers
+   → sharding the database
+   → split into services, monitoring, automation
+```
+
+- **Keep the web tier stateless** — any server can take any request, so scaling out is trivial.
+- **Build redundancy at every tier** — no single machine failure should take the system down.
+- **Cache data as much as possible** — memory is faster than the DB and takes load off it.
+- **Support multiple data centers** — serve users nearby and survive a whole-DC outage.
+- **Host static assets in a CDN** — files load from an edge server near the user.
+- **Scale the data tier with sharding** — one DB server can't hold or serve everything.
+- **Split tiers into individual services** — scale and deploy each part independently.
+- **Monitor the system** — logs and metrics show problems before users do.
+- **Use automation** — CI/CD, autoscaling, and automated tests reduce human error.
+
+| Technique | Why |
+|---|---|
+| Stateless web tier | Easy horizontal scaling |
+| Redundancy | Survive failures |
+| Cache | Reduce latency and DB load |
+| Multiple DCs | Lower latency + failover |
+| CDN | Fast static content |
+| Sharding | Scale DB storage/throughput |
+| Separate services | Independent scaling |
+| Monitoring + automation | Detect and handle problems |
+
+---
+
+## 21. Interview Cheat Sheet
+
+### Key definitions
+
+| Term | One-liner |
+|---|---|
+| DNS | Looks up the IP address for a domain name |
+| Load balancer | Spreads traffic across healthy servers behind one public IP |
+| Horizontal scaling | Add more machines instead of a bigger machine |
+| Replication | Same data copied to several DB servers |
+| Sharding | Different rows split across several DB servers by a shard key |
+| Failover | Switching traffic to a standby when the active one fails |
+| Cache | Fast in-memory copy of hot data; DB stays source of truth |
+| CDN | Edge servers that cache static content near users |
+| Stateless tier | Servers keep no client state locally; state lives in a shared store |
+| Message queue | Durable buffer that decouples producers from consumers |
+| WAL | Append-only log where a DB records each change before applying it |
+| CDC | Capturing DB changes (often from the WAL) and streaming them elsewhere |
+| Consistent hashing | Hashing scheme where adding/removing a node moves only ~1/N of keys |
+
+### Architecture flows
+
+```
+ Request path:   User → DNS → (CDN for static) → LB → Web server → Cache → DB
+ Cache-aside:    Cache HIT → return | MISS → DB → fill cache → return
+ Writes/reads:   Writes → Primary DB | Reads → Replicas
+ Sharded write:  user_id → hash / % N → shard → DB server
+ Multi-DC:       User → GeoDNS → nearest healthy DC → LB → Web servers
+ Async work:     Web server → Queue → Workers → DB / storage
+ Resharding:     Copy → Sync (WAL/CDC) → Catch up → Switch routing → Verify → Cleanup
+```
+
+### Important distinctions
+
+| Not the same | Why |
+|---|---|
+| DNS ≠ networking layer | DNS only resolves names; TCP/IP moves the packets |
+| Cache ≠ database | Cache is a temporary copy; DB is the source of truth |
+| Cache ≠ storage scaling | Cache cuts reads/latency; it doesn't add DB capacity |
+| Replication ≠ failover | Replication copies data; failover switches traffic |
+| Sharding ≠ replication | Sharding splits data; replication copies it |
+| Normalization ≠ denormalization | Store once + join vs duplicate for fast reads |
+| SQL ≠ always better | Rigid schema and harder scale-out |
+| NoSQL ≠ always faster | Speed depends on access pattern, indexing, distribution |
+| Async ≠ parallelism | Async = not blocking while waiting; parallel = running at the same time |
+| async/await ≠ new thread | It yields to the event loop on the same thread |
+| Process ≠ thread | Process owns memory; thread is an execution path inside it |
+| Queue ≠ worker | Queue stores jobs; worker executes them |
+| Producer ≠ consumer | Producer publishes messages; consumer processes them |
+| WAL ≠ replication | WAL is the log; replication *can use* it to propagate changes |
+| CDC | Captures DB changes so other systems can apply them |
+| Migration ≠ synchronization | Migration copies existing data; sync keeps up with new writes |
+| CDN ≠ Redis | CDN caches near users; Redis caches near the app/DB |
+| Stateless ≠ no state | State still exists — just in a shared store, not the web server |
+
+### Quick interview answers
+
+1. **How do you scale a web tier?** Make it stateless, put it behind a load balancer, add servers.
+2. **Why a load balancer?** Distribute traffic, remove unhealthy servers, enable horizontal scaling.
+3. **How do you scale reads?** Read replicas + caching.
+4. **How do you scale writes / storage?** Shard the database.
+5. **How do you choose a shard key?** Even distribution + matches the main query pattern.
+6. **What if a shard fills up?** Reshard, ideally with consistent hashing to limit data movement.
+7. **How do you handle a celebrity hotspot?** Cache the hot key, add replicas, isolate or split the key.
+8. **How do you avoid cross-shard joins?** Co-locate related data or denormalize.
+9. **What is replication lag?** Async replicas trail the primary, so reads may be briefly stale.
+10. **What happens if the primary DB dies?** A replica is promoted (failover); HA automates this.
+11. **When should you not cache?** Data that changes constantly or must always be exactly current.
+12. **How do you update a file cached in a CDN?** Versioned URLs (cache busting) or an invalidation request.
+13. **Why use a message queue?** Decouple services, absorb spikes, process slow work asynchronously.
+14. **Does async/await make Node parallel?** No — it's concurrent on one JS thread; use workers/processes for parallelism.
+15. **Why multiple data centers?** Lower latency for global users and survive a whole-DC failure.
