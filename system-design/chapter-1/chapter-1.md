@@ -110,3 +110,106 @@ In small setups both are often the same process (e.g. an Express app).
 Why split?
 - Web tier handles **traffic**, data tier handles **storage** → scale each **independently**.
 - A crash or CPU spike in the app doesn't take the database down with it.
+
+---
+
+## 5. Load Balancer
+
+### Why
+
+With one web server:
+- server dies → site is down
+- traffic spike → slow responses / timeouts
+
+Fix: run **many** web servers and put a **load balancer (LB)** in front.
+
+### Flow
+
+```
+                    User
+                     │
+                     ▼
+                    DNS  → returns LB's public IP
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │  Load Balancer           │   public IP  (e.g. 88.88.88.1)
+        └──────────────────────────┘
+             │                │        private network
+             ▼                ▼
+      ┌────────────┐   ┌────────────┐
+      │ Server 1   │   │ Server 2   │   private IPs (10.0.0.1, 10.0.0.2)
+      └────────────┘   └────────────┘
+```
+
+| Concept | Meaning |
+|---|---|
+| Public IP (LB) | The only address users see / DNS returns |
+| Private IPs (servers) | Reachable only inside the network → servers are not directly exposed |
+| Request distribution | LB picks a server: round robin, least connections, IP hash, … |
+| Health checks | LB pings servers (`/health`); unhealthy ones stop receiving traffic |
+
+What we gain:
+- **Failover:** Server 1 down → all traffic goes to Server 2.
+- **Horizontal scaling:** traffic grows → add Server 3, register it with LB.
+
+### Vertical vs horizontal scaling
+
+| | Vertical (scale up) | Horizontal (scale out) |
+|---|---|---|
+| How | Bigger machine (more CPU/RAM) | More machines |
+| Limit | Hardware ceiling | Practically unlimited |
+| Failure | Still a single point of failure | Others keep serving |
+| Complexity | Simple | Needs LB, stateless servers, etc. |
+
+Rule: vertical is fine early; large systems scale **horizontally**.
+
+---
+
+## 6. Database
+
+The database is the **source of truth** — where data permanently lives.
+
+### Relational databases (RDBMS)
+
+- Data in **tables** (rows + columns) with a fixed **schema**.
+- Tables connect via **keys** → queried with **SQL** using **joins**.
+- Strong **transactions** (ACID): all steps succeed or none do.
+- Examples: **PostgreSQL**, MySQL, Oracle, SQL Server.
+
+> **PostgreSQL** = popular open-source RDBMS. Strong SQL support, transactions,
+> indexes, JSONB columns, extensions. A safe default for most apps.
+
+```
+ users                          orders
+ ┌────┬────────┐                ┌────┬─────────┬────────┐
+ │ id │ name   │                │ id │ user_id │ amount │
+ ├────┼────────┤   1 ─── many   ├────┼─────────┼────────┤
+ │ 1  │ Asha   │ ◀───────────── │ 10 │ 1       │ 500    │
+ │ 2  │ Ravi   │                │ 11 │ 1       │ 250    │
+ └────┴────────┘                └────┴─────────┴────────┘
+```
+
+### NoSQL databases
+
+Not table-first. Main families:
+
+| Type | Stores | Examples |
+|---|---|---|
+| Key-value | `key → value` | Redis, DynamoDB |
+| Document | JSON-like documents | MongoDB, Couchbase |
+| Wide-column | Rows with flexible columns, built for huge scale | Cassandra, HBase |
+| Graph | Nodes + edges | Neo4j |
+
+When NoSQL is useful:
+- Data is **flexible / semi-structured** (fields vary between records).
+- You need very **low latency** for simple lookups by key.
+- Massive data volume that must **scale out horizontally** across many machines.
+- Few relationships between entities.
+
+### One-line memory
+
+```
+SQL   → structured relationships + transactions
+NoSQL → flexible schema + scale-out
+```
