@@ -295,3 +295,61 @@ Other formats: Protocol Buffers, Avro, MessagePack (binary → smaller/faster th
 > NoSQL performance comes from **access patterns** (fetch by key, data stored the way
 > it's read), **indexing**, **no joins**, and **distribution** across many machines.
 > A badly modeled NoSQL DB can be slower than Postgres.
+
+---
+
+## 10. Sharding
+
+**Sharding** = splitting one big database into smaller pieces (**shards**), each on its
+own server. Also called **horizontal partitioning**.
+
+- Every shard has the **same schema**.
+- Each shard holds **different rows**.
+
+```
+ Vertical partitioning:   split COLUMNS  (users_profile | users_settings)
+ Horizontal (sharding):   split ROWS     (users 1..1M on A | users 1M..2M on B)
+```
+
+### Shard key
+
+The **shard key** decides which shard a row lives on. Example: `user_id`.
+
+```
+ shard = user_id % 4
+```
+
+| user_id | user_id % 4 | Shard |
+|---|---|---|
+| 0 | 0 | Shard 0 |
+| 1 | 1 | Shard 1 |
+| 6 | 2 | Shard 2 |
+| 7 | 3 | Shard 3 |
+| 8 | 0 | Shard 0 |
+
+### Routing
+
+```
+ user_id ──▶ shard function (user_id % 4) ──▶ shard N ──▶ DB server N
+
+                    ┌──────────────────┐
+  user_id = 6  ───▶ │  6 % 4 = 2       │
+                    └────────┬─────────┘
+       ┌──────────┬──────────┼──────────┬──────────┐
+       ▼          ▼          ▼          ▼
+   Shard 0    Shard 1    Shard 2 ✅   Shard 3
+   (DB-0)     (DB-1)     (DB-2)      (DB-3)
+```
+
+- **Write:** new row for `user_id = 6` → compute `6 % 4 = 2` → insert into Shard 2.
+- **Read:** fetch `user_id = 6` → same function → go straight to Shard 2. No need to search all shards.
+
+The routing logic lives in the app, a DB proxy, or the database itself (e.g. Vitess, Citus, MongoDB).
+
+### Why sharding scales
+
+- **Storage:** data spread across N machines → N× capacity.
+- **Throughput:** reads/writes spread across N machines → each handles ~1/N of the load.
+- **Smaller indexes** per shard → faster queries.
+
+Good shard key = **evenly distributes data** and matches **how data is queried**.
