@@ -213,3 +213,85 @@ When NoSQL is useful:
 SQL   → structured relationships + transactions
 NoSQL → flexible schema + scale-out
 ```
+
+---
+
+## 7. SQL vs NoSQL
+
+No absolute winner — pick based on **data shape** and **access patterns**.
+
+| Need | SQL (RDBMS) | NoSQL |
+|---|---|---|
+| Structured data, known schema | ✅ Great fit | Works, but no enforcement |
+| Relationships between entities | ✅ Foreign keys | Usually modeled by embedding / duplicating |
+| Joins | ✅ Native | Limited or none → join in app code |
+| Multi-row transactions (ACID) | ✅ Core feature | Varies (often limited to one item/document) |
+| Flexible / changing schema | Needs migrations | ✅ Natural |
+| Huge distributed workloads | Possible, harder (sharding by hand / extensions) | ✅ Often built-in |
+| Horizontal scaling | Harder | ✅ Usually designed for it |
+
+Interview framing:
+- **Payments, orders, inventory** → SQL (correctness, transactions, relations).
+- **Activity feeds, logs, sessions, IoT events, catalogs with varied fields** → NoSQL can fit well.
+- Many real systems use **both** (Postgres for core data, Redis/Cassandra for specific workloads).
+
+---
+
+## 8. ORM
+
+**ORM (Object-Relational Mapper)** = a library that lets you work with DB rows as
+objects in your language.
+
+> An ORM is **not a database**. It is a translation layer between code and a (usually SQL) database.
+
+```
+ Code (objects)                ORM                      Database (tables)
+ ───────────────        ─────────────────         ──────────────────────
+ prisma.user.findUnique  →  generates SQL  →   SELECT * FROM users WHERE id = 42;
+ ({ where: { id: 42 } })                              │
+        ▲                                             │
+        └──── row mapped back to a User object ◀──────┘
+```
+
+Examples: **Prisma**, **Sequelize**, **TypeORM** (Node.js), SQLAlchemy (Python), Hibernate (Java).
+
+What it gives you:
+- **Object ↔ table mapping** (class/model ↔ table, field ↔ column).
+- **SQL generation** — write code, ORM writes the query.
+- **Migrations** — versioned schema changes (`prisma migrate`), tracked in git.
+- Type safety, less boilerplate, some protection from SQL injection (parameterized queries).
+
+Limitations:
+- Generated SQL can be **inefficient** (e.g. N+1 queries).
+- Complex queries / reports are often easier in **raw SQL**.
+- Hides what's happening → you still need to understand SQL and indexes.
+
+---
+
+## 9. Serialization / Deserialization
+
+| Term | Meaning |
+|---|---|
+| **Serialization** | In-memory object → format that can be sent/stored (JSON string, bytes) |
+| **Deserialization** | That format → back into an in-memory object |
+
+```js
+const user = { id: 42, name: "Asha" };
+
+const text = JSON.stringify(user);   // serialize   → '{"id":42,"name":"Asha"}'
+const again = JSON.parse(text);      // deserialize → { id: 42, name: "Asha" }
+```
+
+### API flow
+
+```
+ Client object ─serialize─▶ JSON over HTTP ─deserialize─▶ Server object
+ Server object ─serialize─▶ JSON over HTTP ─deserialize─▶ Client object
+```
+
+Other formats: Protocol Buffers, Avro, MessagePack (binary → smaller/faster than JSON).
+
+> ⚠️ Serialization is **NOT** why NoSQL is fast.
+> NoSQL performance comes from **access patterns** (fetch by key, data stored the way
+> it's read), **indexing**, **no joins**, and **distribution** across many machines.
+> A badly modeled NoSQL DB can be slower than Postgres.
