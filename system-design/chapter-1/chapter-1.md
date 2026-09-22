@@ -548,3 +548,88 @@ writes** → those must be recovered or accepted as lost.
 | High availability (HA) | Replication + **automatic** failover → system keeps working through failures |
 
 Benefits: **performance** (parallel reads), **reliability** (data survives a server loss), **availability** (another copy can take over).
+
+---
+
+## 14. Multi-Data Center
+
+**Why:** users are worldwide, and a whole data center (DC) can go down (power, network, region outage).
+
+```
+            User
+              │
+              ▼
+           GeoDNS  ── routes by user location + DC health
+              │
+      ┌───────┴────────┐
+      ▼                ▼
+   DC: US-East      DC: EU-West        (nearest / healthy DC)
+      │                │
+      ▼                ▼
+ Load Balancer    Load Balancer
+      │                │
+      ▼                ▼
+ Web Servers      Web Servers
+      │                │
+      ▼                ▼
+ DB + Cache  ◀─async replication─▶  DB + Cache
+```
+
+| Concept | Meaning |
+|---|---|
+| **GeoDNS** | DNS that returns a different IP based on where the user is (e.g. EU user → EU DC) |
+| Lower latency | Requests travel a shorter distance |
+| Failover | DC down → GeoDNS sends **all** traffic to the healthy DC |
+| Cross-DC replication | Data copied between DCs so either can serve any user |
+| Asynchronous replication | Cross-DC is usually async (sync over long distance is too slow) → some lag |
+
+### Three main challenges
+
+| # | Challenge | What it means |
+|---|---|---|
+| 1 | **Traffic redirection** | Send users to the right DC (GeoDNS), and reroute on failure |
+| 2 | **Data synchronization** | On failover, users must still find their data → replicate across DCs, handle lag/conflicts |
+| 3 | **Testing & deployment** | Same code, config, and versions in every DC → automated deploys, test in each location |
+
+> **Memory:** Multi-DC = **Route traffic + Sync data + Deploy consistently**
+
+---
+
+## 15. Stateless Web Tier
+
+**State** = data about a user's session (logged-in user, cart, preferences).
+
+| | Stateful server | Stateless server |
+|---|---|---|
+| Session data kept | In the server's own memory | In a **shared store** (Redis, DB, NoSQL) |
+| Next request must hit | The **same** server | **Any** server |
+| Scaling / failure | Hard — server dies, sessions lost | Easy — add/remove servers freely |
+
+### The problem with local state
+
+```
+ Request 1 (login)  ──▶ LB ──▶ Server A   (session saved in A's memory)
+ Request 2          ──▶ LB ──▶ Server B   ❌ "who are you?" → user logged out
+```
+
+Workaround: **sticky sessions** (LB always sends user to the same server) — works, but
+makes balancing uneven and breaks when that server dies.
+
+### Stateless design
+
+```
+ Client  (cookie: session_id=abc123)
+   │
+   ▼
+ Load Balancer
+   │
+   ▼
+ Any Web Server ──── lookup session abc123 ───▶ Shared State Store (Redis / DB)
+```
+
+- Client carries a **session ID** (cookie) or a **token** (e.g. JWT).
+- Any server can look up the session → LB can route anywhere.
+- Enables **autoscaling**: servers come and go based on load.
+
+> **Memory:** Stateless = the server doesn't depend on **locally stored** client state.
+> The application still has state — it just lives in a shared store, not in the web server.
