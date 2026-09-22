@@ -728,3 +728,140 @@ sensible **TTLs**, and a **fallback** to origin if the CDN is down.
  CDN   → cache closer to USERS          (static files, public responses, at the edge)
  Redis → cache closer to APP / DATABASE (query results, sessions, in your data center)
 ```
+
+---
+
+## 18. Message Queue
+
+A **message queue** is a durable buffer that lets one part of the system hand off work
+to another **asynchronously**.
+
+```
+ Producer ──publish──▶ [ msg | msg | msg ] ──consume──▶ Consumer / Worker
+                          Message Queue
+```
+
+| Role | What it does |
+|---|---|
+| **Producer** | Creates a message (a job / event) and puts it on the queue |
+| **Queue** | Stores messages until they're processed |
+| **Consumer / worker** | Pulls messages and does the actual work |
+
+### Example: photo upload
+
+```
+ User uploads photo
+    │
+    ▼
+ Web server ── saves file, pushes job {photoId: 7, task: "resize"} ──▶ Queue
+    │                                                                   │
+    ▼                                                                   ▼
+ Responds "upload received" immediately                  Workers: resize, crop, thumbnail
+```
+
+Why queues:
+- **Asynchronous processing:** user doesn't wait for slow work.
+- **Decoupling:** producer and consumer don't need to know about each other or be up at the same time.
+- **Buffering:** traffic spikes pile up in the queue instead of crushing workers.
+- **Independent scaling:** queue growing → add workers; queue empty → remove them.
+
+Examples: **RabbitMQ**, **Kafka** (event log/stream), **AWS SQS**, **Redis + BullMQ** (Node.js jobs).
+
+### Two meanings of "async"
+
+| | System-level async | Programming-level async |
+|---|---|---|
+| Where | Between **services** | Inside **one process** |
+| Tool | Message queue | `async` / `await`, Promises, event loop |
+| Meaning | Work is handed off and done **later**, maybe on another machine | Code doesn't block while **waiting** for I/O |
+| Example | Web server enqueues email job, worker sends it | `await db.query()` — Node handles other requests meanwhile |
+
+---
+
+## 19. Async / Await / Threads / Processes
+
+### Async
+
+Don't **sit idle** while waiting for I/O (DB, network, disk). Start the operation, do
+other work, continue when the result is ready.
+
+### async/await
+
+- Syntax over **Promises**.
+- `await` pauses **this function**, not the whole program.
+- It does **NOT** create a new thread.
+- While the operation is pending, Node.js runs other code (other requests, callbacks).
+
+```js
+app.get("/user/:id", async (req, res) => {
+  const user = await db.user.findUnique({ where: { id: +req.params.id } });
+  // while waiting on the DB, Node serves other requests
+  res.json(user);
+});
+```
+
+### Single-threaded Node.js
+
+- Your JavaScript runs on **one main thread** (the event loop).
+- I/O is handed to the OS / libuv thread pool; results come back as callbacks.
+
+> Single-threaded ≠ one request at a time.
+> Node handles **thousands** of concurrent requests because most of their time is spent **waiting on I/O**, not running JS.
+
+### Blocking
+
+CPU-heavy **synchronous** work keeps the main thread busy → **nothing else runs**.
+
+```js
+app.get("/slow", (req, res) => {
+  let x = 0;
+  for (let i = 0; i < 5e9; i++) x += i;  // blocks the event loop for seconds
+  res.send(String(x));                    // every other request waits too
+});
+```
+
+Fixes: move it to a **worker thread**, a **separate process**, or a **queue + workers**.
+
+### Process vs thread
+
+| | Process | Thread |
+|---|---|---|
+| What | A **running program** instance | An **execution path** inside a process |
+| Memory | Own virtual memory space (isolated) | **Shares** the process's memory |
+| Example | `npm run dev` starts a Node process | Node's main JS thread; worker threads |
+| Crash impact | Doesn't affect other processes | Can take down the whole process |
+| Cost | Heavier to create | Lighter |
+
+### Parallelism
+
+- **Concurrency** = handling many tasks by interleaving (one thread can do it — Node's event loop).
+- **Parallelism** = tasks actually running **at the same time** on multiple CPU cores.
+- Parallelism needs **multiple threads or processes** (worker threads, Node cluster / PM2, multiple worker containers).
+
+### Putting it together
+
+```
+ Users
+   │
+   ▼
+ Load Balancer
+   │
+   ▼
+ Web Servers        (async I/O; respond fast; enqueue heavy work)
+   │
+   ▼
+ Message Queue      (buffer)
+   │
+   ▼
+ Multiple Worker Processes   (run in parallel, scale by queue size)
+   │
+   ▼
+ Database / Storage
+```
+
+> **Memory:**
+> - Async = don't wait doing nothing
+> - Process = running program + its own memory space
+> - Thread = execution path inside a process
+> - Queue = buffer between services
+> - Multiple workers = parallel processing capacity
