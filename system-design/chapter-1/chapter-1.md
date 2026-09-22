@@ -353,3 +353,127 @@ The routing logic lives in the app, a DB proxy, or the database itself (e.g. Vit
 - **Smaller indexes** per shard → faster queries.
 
 Good shard key = **evenly distributes data** and matches **how data is queried**.
+
+---
+
+## 11. Sharding Challenges
+
+### 11.1 Resharding
+
+Needed when:
+- **Shard exhaustion:** a shard runs out of space / CPU due to fast growth.
+- **Uneven distribution:** some shards fill up much faster than others.
+
+Problem with `user_id % 4` → `% 5`: almost **every key maps to a new shard** → massive data movement.
+
+**Consistent hashing** fixes most of this: when a shard is added/removed, only the keys
+next to it on the hash ring move (≈ 1/N of the data), not everything.
+
+#### Resharding flow (online, no downtime)
+
+```
+ OLD SHARD
+    │
+    ▼
+ MIGRATION ─────────── copy existing data (snapshot / bulk copy)
+    │
+    ▼
+ NEW SHARD
+    │
+    ▼
+ SYNCHRONIZATION ───── writes keep arriving on the old shard during the copy
+    │
+    ▼
+ WAL / CDC ─────────── capture ongoing changes
+    │
+    ▼
+ Apply changes ─────── replay them on the new shard
+    │
+    ▼
+ New shard catches up  (lag ≈ 0)
+    │
+    ▼
+ Switch routing ────── shard map now points these keys to the new shard
+    │
+    ▼
+ Verify ────────────── row counts / checksums / sample reads match
+    │
+    ▼
+ Cleanup old data ──── delete moved rows from the old shard
+```
+
+| Term | Meaning |
+|---|---|
+| Migration | One-time copy of **existing** data |
+| Synchronization | Keeping the copy up to date with **new** writes until cutover |
+| **WAL** (Write-Ahead Log) | DB's internal append-only log; every change is written here first (for crash recovery) |
+| **CDC** (Change Data Capture) | Reading those changes (often from the WAL) and streaming them elsewhere (e.g. Debezium → Kafka) |
+
+### 11.2 Celebrity / Hotspot Problem
+
+**Hot shard** = one shard gets far more traffic than the rest.
+
+Example: a celebrity's profile lives on Shard 2. Millions of users read it at once →
+Shard 2 is overloaded while Shards 0, 1, 3 are idle. Sharding by `user_id` evenly spread
+the **data**, but not the **traffic**.
+
+```
+ Shard 0  ▁
+ Shard 1  ▁
+ Shard 2  █████████████  ← celebrity key
+ Shard 3  ▁
+```
+
+Fixes:
+- **Cache** the hot data (Redis / CDN) → most reads never reach the DB.
+- **Read replicas** for the hot shard → spread reads over multiple copies.
+- **Dedicated shard** for very hot keys.
+- **Split the hot key** (e.g. `celebrity_id#1..#10`) to spread writes like counters/likes where appropriate.
+
+> Caching mainly reduces **read traffic and latency** on the DB.
+> It does **NOT** increase database **storage capacity**.
+
+### 11.3 Cross-Shard Joins
+
+Before sharding, `JOIN users ↔ orders` is one query on one DB.
+After sharding, related rows may live on **different servers** → the DB can't join them.
+
+Options:
+- **Cross-shard query:** query many shards, merge results in the app (slow, complex).
+- **Shard related data together:** shard `orders` by `user_id` too, so a user's orders sit with the user.
+- **Denormalize:** copy the needed fields into the table you read, so no join is needed. (Most common.)
+
+---
+
+## 12. Normalization vs Denormalization
+
+| | Normalization | Denormalization |
+|---|---|---|
+| Idea | Split data, store each fact **once** | **Duplicate** selected data where it's read |
+| Duplication | Minimal | Intentional |
+| Consistency | Easy (one place to update) | Harder (update many copies) |
+| Reads | More joins | Fewer joins, faster/simpler |
+| Writes | Simple | More work |
+| Storage | Less | More |
+
+### Example
+
+Normalized:
+
+```
+ users:  { id: 1, name: "Asha" }
+ posts:  { id: 99, user_id: 1, text: "hello" }
+
+ Show post with author → JOIN posts + users
+```
+
+Denormalized:
+
+```
+ posts:  { id: 99, user_id: 1, author_name: "Asha", text: "hello" }
+
+ Show post with author → one read, no join
+ Cost: if Asha renames herself, every post copy must be updated
+```
+
+Rule of thumb: **normalize by default**, denormalize the specific **read-heavy** paths that need it.
