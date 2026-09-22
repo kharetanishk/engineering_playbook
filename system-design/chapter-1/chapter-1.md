@@ -633,3 +633,98 @@ makes balancing uneven and breaks when that server dies.
 
 > **Memory:** Stateless = the server doesn't depend on **locally stored** client state.
 > The application still has state — it just lives in a shared store, not in the web server.
+
+---
+
+## 16. Cache
+
+**Cache** = a fast, usually **in-memory** storage layer that keeps frequently used data
+so we don't hit the database every time. Examples: Redis, Memcached.
+
+- Memory is ~100× faster than disk-backed DB queries.
+- The **DB stays the source of truth**; cache is a disposable copy.
+
+### Read-through / cache-aside flow
+
+```
+ Request
+   │
+   ▼
+ Cache
+   ├── HIT  ──────────────────────────▶ return data
+   └── MISS ──▶ DB ──▶ store in Cache ──▶ return data
+```
+
+```js
+async function getUser(id) {
+  const cached = await redis.get(`user:${id}`);
+  if (cached) return JSON.parse(cached);                       // hit
+
+  const user = await db.user.findUnique({ where: { id } });    // miss
+  await redis.set(`user:${id}`, JSON.stringify(user), "EX", 300); // TTL 5 min
+  return user;
+}
+```
+
+### Key concepts
+
+| Concept | Meaning |
+|---|---|
+| Cache hit / miss | Found in cache / not found → go to DB |
+| **TTL / expiration** | Entry is removed after a set **time** (e.g. 5 min) |
+| **Eviction** | Cache is **full** → remove entries to make room (LRU, LFU, FIFO) |
+| **Invalidation** | Data changed in DB → delete/update the cached copy |
+| **Consistency** | Cache and DB can disagree for a while (stale reads) |
+
+> **Expiration vs eviction:** expiration = removed because it's **old**;
+> eviction = removed because there's **no space**.
+
+### Things to decide
+
+- **What to cache:** data read often, changed rarely.
+- **TTL:** too short → many misses; too long → stale data.
+- **Invalidation on write:** update DB, then delete the cache key (next read refills it).
+- **Single point of failure:** run multiple cache nodes (and across DCs).
+- **Cold cache / stampede:** many misses at once hit the DB → warm up, add jitter/locks.
+
+Why cache helps: **lower latency** + **less DB load**.
+What cache does **not** do: add database **storage capacity** — the full data still lives in the DB.
+
+---
+
+## 17. CDN
+
+**CDN (Content Delivery Network)** = a network of **edge servers** around the world that
+cache content close to users. Examples: Cloudflare, CloudFront, Akamai.
+
+Best for **static assets**: images, videos, CSS, JS, fonts.
+
+```
+ User (Mumbai)
+   │  GET /logo.png
+   ▼
+ CDN edge (Mumbai)
+   ├── HIT  ──▶ return from edge (fast)
+   └── MISS ──▶ fetch from ORIGIN (your server / S3)
+               ──▶ cache at edge (with TTL) ──▶ return
+```
+
+| Concept | Meaning |
+|---|---|
+| Edge server | CDN node near the user |
+| Origin server | Where the real file lives (web server, S3 bucket) |
+| TTL | How long the edge keeps a copy (from `Cache-Control` headers) |
+| Dynamic content caching | CDN can also cache API/HTML responses based on path, query, headers |
+| Personalized content ⚠️ | Never cache user-specific responses publicly — user A might see user B's data |
+| Invalidation | Ask the CDN to purge a file before its TTL ends (API call; can be slow / cost money) |
+| Cache busting / versioning | Put a version in the URL (`app.3f9a2c.js`, `logo.png?v=2`) → new URL = new file, no purge needed |
+
+Considerations: **cost** (you pay for transfer — don't cache rarely used files),
+sensible **TTLs**, and a **fallback** to origin if the CDN is down.
+
+### CDN vs Redis
+
+```
+ CDN   → cache closer to USERS          (static files, public responses, at the edge)
+ Redis → cache closer to APP / DATABASE (query results, sessions, in your data center)
+```
