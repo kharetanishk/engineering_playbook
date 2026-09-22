@@ -477,3 +477,74 @@ Denormalized:
 ```
 
 Rule of thumb: **normalize by default**, denormalize the specific **read-heavy** paths that need it.
+
+---
+
+## 13. Replication
+
+**Database replication** = keeping **copies** of the same data on multiple DB servers.
+
+> Sharding **splits** data (each server has different rows).
+> Replication **copies** data (each server has the same rows).
+
+### Primary / replica
+
+```
+                 writes
+  App servers ────────────▶ ┌──────────┐
+      │                     │ Primary  │
+      │                     └────┬─────┘
+      │                          │  WAL / change stream
+      │            ┌─────────────┼─────────────┐
+      │            ▼             ▼             ▼
+      │       ┌─────────┐  ┌─────────┐  ┌─────────┐
+      └──────▶│Replica 1│  │Replica 2│  │Replica 3│
+       reads  └─────────┘  └─────────┘  └─────────┘
+```
+
+| Role | Handles |
+|---|---|
+| **Primary** | All **writes** (insert/update/delete); source of changes |
+| **Replica (read replica)** | **Reads** only; receives changes from the primary |
+
+Most apps read far more than they write → many replicas, one primary.
+
+### How changes flow: WAL
+
+1. Primary writes every change to its **WAL** first.
+2. WAL records are shipped to replicas.
+3. Replicas **replay** them → same data.
+
+> WAL is the **log**, not replication itself. Replication *uses* the WAL as the change stream.
+
+### Replication lag
+
+Replication is often **asynchronous** → replicas are a little behind the primary.
+
+Example: user updates their bio (write → primary), page reloads (read → replica) → sees the **old** bio.
+
+Common fixes: read-your-own-writes from the primary for a short window, or synchronous replication for critical data (slower writes).
+
+### Failures & failover
+
+| What fails | What happens |
+|---|---|
+| A replica | Reads go to other replicas (or primary). A **new replica** is created to replace it. |
+| The primary | A replica is **promoted** to new primary (**failover**); the rest follow it. |
+
+Why is a failed replica **recreated from a healthy source** (not just restarted)?
+- Its data may be **stale, incomplete, or corrupted**.
+- Clean path: take a snapshot/backup of a healthy node → restore → replay WAL to catch up.
+
+Promoting a replica has a catch: with async replication it may be **missing the last few
+writes** → those must be recovered or accepted as lost.
+
+### Terms that get mixed up
+
+| Term | Meaning |
+|---|---|
+| Replication | Copying / synchronizing data to other servers |
+| Failover | **Switching traffic** to another DB when one fails |
+| High availability (HA) | Replication + **automatic** failover → system keeps working through failures |
+
+Benefits: **performance** (parallel reads), **reliability** (data survives a server loss), **availability** (another copy can take over).
