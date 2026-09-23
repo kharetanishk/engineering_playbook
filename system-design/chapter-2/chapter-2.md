@@ -135,3 +135,47 @@ does not matter at this level.
 - Work in powers of 10: 300M = 3 × 10^8, 86,400 ≈ 10^5 → 3 × 10^8 / 10^5 = 3 × 10^3 = 3,000 (close to the real 3,472).
 - 1 million MB = 1 TB, 1 million GB = 1 PB.
 - To go bytes → bits, multiply by 8; bits → bytes, divide by 8.
+
+---
+
+## 3. Time Units
+
+```
+ 1 second = 1,000 ms
+          = 1,000,000 μs
+          = 1,000,000,000 ns
+
+ 1 ms = 1,000 μs
+ 1 μs = 1,000 ns
+```
+
+| Unit | Name | Fraction of a second |
+|---|---|---|
+| ns | nanosecond | 1 / 1,000,000,000 |
+| μs | microsecond | 1 / 1,000,000 |
+| ms | millisecond | 1 / 1,000 |
+| s | second | 1 |
+
+### Where each shows up
+
+| Unit | Typical operation |
+|---|---|
+| ns | CPU cache read, one CPU instruction |
+| μs | RAM access, lock/unlock, compressing a small buffer |
+| ms | Disk read, network round trip, a full API request |
+| s | Batch job, video upload, report generation |
+
+Useful for estimation:
+
+```
+ 1 minute =        60 seconds
+ 1 hour   =     3,600 seconds
+ 1 day    =    86,400 seconds
+ 1 month  ≈ 2,600,000 seconds  (~2.6M)
+ 1 year   ≈    31.5M  seconds
+```
+
+> **Memory:**
+> ns → extremely small (CPU-level)
+> μs → micro (memory-level)
+> ms → milliseconds (disk and network level, what users feel)
