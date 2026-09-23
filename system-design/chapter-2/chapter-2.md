@@ -79,3 +79,59 @@ assumptions and multiplication/division you can do in your head.
 
 Say your assumptions out loud, round aggressively (300M ÷ 86,400 ≈ 3,500, not 3,472.2),
 and keep the arithmetic simple.
+
+---
+
+## 2. Power Of Two
+
+Data volumes are based on powers of two.
+
+```
+ 2^10 = 1,024        ≈ 1 thousand  (1K)
+ 2^20 = 1,048,576    ≈ 1 million   (1M)
+ 2^30 ≈ 1,073 million ≈ 1 billion  (1B)
+ 2^40 ≈ 1 trillion   (1T)
+ 2^50 ≈ 1 quadrillion (1P)
+```
+
+| Power | Approx value | Unit (bytes) |
+|---|---|---|
+| 2^10 | 1 thousand | 1 KB |
+| 2^20 | 1 million | 1 MB |
+| 2^30 | 1 billion | 1 GB |
+| 2^40 | 1 trillion | 1 TB |
+| 2^50 | 1 quadrillion | 1 PB |
+
+For estimation, treat each step as **×1000** (1 GB ≈ 1000 MB). The 2.4% error per step
+does not matter at this level.
+
+### Bytes vs bits
+
+```
+ 1 byte = 8 bits
+```
+
+| Measured in | Usually written as | Example |
+|---|---|---|
+| **Storage** | **bytes** (KB, MB, GB, TB, PB) | "30 TB of media per day" |
+| **Network bandwidth** | **bits per second** (Kbps, Mbps, Gbps) | "a 1 Gbps link" |
+
+> ⚠️ `MB` = megabyte, `Mb`/`Mbps` = megabit. They differ by 8×.
+> Mixing them up is the most common estimation mistake.
+
+### Quick conversions
+
+```
+ 1 Gbps = 1,000 Mbps
+ 1 Gbps ÷ 8 = 125 MB/s
+ 1 Mbps ÷ 8 = 125 KB/s
+
+ 100 MB/s × 8 = 800 Mbps
+```
+
+### Mental math tips
+
+- Round to one significant digit: 3,472 → ~3,500 → "about 3.5k".
+- Work in powers of 10: 300M = 3 × 10^8, 86,400 ≈ 10^5 → 3 × 10^8 / 10^5 = 3 × 10^3 = 3,000 (close to the real 3,472).
+- 1 million MB = 1 TB, 1 million GB = 1 PB.
+- To go bytes → bits, multiply by 8; bits → bytes, divide by 8.
