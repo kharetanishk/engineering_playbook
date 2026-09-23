@@ -498,3 +498,88 @@ Example of how fast this adds up:
 Start simple: `users × actions × size × days`. Get the order of magnitude first, then
 say "with 3× replication and backups this is roughly 3–4× higher". Adding every factor
 up front just buries the main number.
+
+---
+
+## 9. Bandwidth Estimation
+
+**Bandwidth** = how much data is transferred per unit of time.
+
+```
+ Bandwidth = Requests per second × data per request
+```
+
+Example:
+
+```
+ 1,000 requests/sec × 100 KB/request
+   = 100,000 KB/sec
+   ≈ 100 MB/sec
+```
+
+Convert to bits, because network links are sold in bits per second:
+
+```
+ 100 MB/s × 8 = 800 Mbps
+```
+
+So this workload needs roughly a **1 Gbps** link — and that's the average, so size for peak.
+
+### MB/s vs Mbps
+
+| Written | Means | Note |
+|---|---|---|
+| **MB/s** | Mega**bytes** per second | Data volume — how storage is measured |
+| **Mbps** / **Mb/s** | Mega**bits** per second | Network speed — how links are sold |
+
+```
+ MB/s → Mbps :  × 8
+ Mbps → MB/s :  ÷ 8
+
+ 1 Gbps ≈ 125 MB/s
+```
+
+> Lowercase **b** = bits, uppercase **B** = bytes. Getting this wrong makes you 8× off.
+
+### Estimate both directions
+
+- **Egress / outbound** (server → user): usually the big one, and the one cloud providers bill.
+- **Ingress / inbound** (user → server): uploads, writes.
+
+Example: a video service streams far more than it receives, so its outbound bandwidth
+dominates — which is exactly why a CDN is used to serve it.
+
+> **Memory:** Data × requests = bandwidth.
+
+---
+
+## 10. Read/Write Ratio
+
+Most systems are **read-heavy** — knowing by how much changes the whole design.
+
+Example:
+
+```
+ 1,000 total requests/sec
+   80% reads  →   800 reads/sec
+   20% writes →   200 writes/sec
+```
+
+Common ratios: social feeds and catalogs are often 10:1 to 100:1 reads-to-writes;
+logging/analytics ingestion can be write-heavy instead.
+
+### What the ratio changes
+
+| Ratio | Design implication |
+|---|---|
+| **Read-heavy** | Cache aggressively; add **read replicas**; use a CDN; denormalize for fast reads |
+| **Write-heavy** | Shard to spread writes; **queue** and batch them; keep indexes lean (each index slows writes) |
+| Either | Sizes the DB, cache capacity and replica count |
+
+```
+ Read-heavy:   Client → Cache → (miss) → Read replicas → Primary
+ Write-heavy:  Client → Queue → Workers → Primary → shards
+```
+
+Rule: **reads scale with copies** (cache, replicas, CDN); **writes scale with partitions**
+(sharding, queues).
