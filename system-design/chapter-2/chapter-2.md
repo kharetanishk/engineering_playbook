@@ -434,3 +434,67 @@ Example:
 > ⚠️ The peak multiplier is an **assumption**, not a universal constant.
 > 2× is a common interview default. Real systems vary — a global app may be flatter (~1.5×),
 > a regional or event-driven one much spikier (5–10×). State the number you're assuming.
+
+---
+
+## 8. Storage Estimation
+
+### The pattern
+
+```
+ Data generated per day
+   = Active users per day
+   × actions per user per day
+   × data size per action
+
+ Total storage
+   = Storage per day
+   × number of days retained
+```
+
+Example:
+
+```
+ 10M DAU × 5 posts/day × 2 KB/post
+   = 100M KB/day
+   ≈ 100 GB/day
+
+ × 365 days × 3 years  ≈ 110 TB
+```
+
+Do it **per data type** when sizes differ wildly — text and media are not in the same league:
+
+| Data | Typical size | Effect |
+|---|---|---|
+| Text post / row | ~1 KB | Small; QPS matters more than bytes |
+| Metadata (ids, timestamps) | ~100 B | Usually negligible |
+| Image | ~0.5–2 MB | Dominates storage |
+| Video | ~10 MB–GBs | Dominates everything |
+
+> Media almost always decides the storage answer. Estimate it separately from text.
+
+### Multipliers to remember
+
+| Factor | Effect on raw storage |
+|---|---|
+| **Replication** | ×2, ×3 — copies for durability and availability |
+| **Backups** | + snapshots/archives, often kept for months |
+| **Metadata** | + a small % (ids, timestamps, ownership) |
+| **Indexes** | + 10–30% of table size, sometimes more |
+| **Compression** | ÷ 2–10 for text/logs; ~×1 for already-compressed media (JPEG, MP4) |
+| **Retention** | Deleting after N days can cap total storage entirely |
+| **Growth** | Users grow → next year's daily rate is higher than today's |
+
+Example of how fast this adds up:
+
+```
+ Raw           30 TB/day
+ × 3 replicas  90 TB/day
+ + backups    ~110 TB/day
+```
+
+### In an interview
+
+Start simple: `users × actions × size × days`. Get the order of magnitude first, then
+say "with 3× replication and backups this is roughly 3–4× higher". Adding every factor
+up front just buries the main number.
