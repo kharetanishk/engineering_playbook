@@ -2,6 +2,26 @@
 
 > Source: *System Design Interview* (Alex Xu), Chapter 2. Notes are my own summaries.
 
+## Contents
+
+1. [What Is Back-Of-The-Envelope Estimation?](#1-what-is-back-of-the-envelope-estimation)
+2. [Power Of Two](#2-power-of-two)
+3. [Time Units](#3-time-units)
+4. [Latency Numbers](#4-latency-numbers)
+5. [CPU Cache vs RAM](#5-cpu-cache-vs-ram)
+6. [Availability](#6-availability)
+7. [QPS](#7-qps)
+8. [Storage Estimation](#8-storage-estimation)
+9. [Bandwidth Estimation](#9-bandwidth-estimation)
+10. [Read/Write Ratio](#10-readwrite-ratio)
+11. [Worked Example — Twitter-Style Service](#11-worked-example--twitter-style-service)
+12. [Estimation Workflow](#12-estimation-workflow)
+13. [Conversion Cheat Sheet](#13-conversion-cheat-sheet)
+14. [Common Mistakes](#14-common-mistakes)
+15. [Latency vs Throughput](#15-latency-vs-throughput)
+
+---
+
 **Back-of-the-envelope estimation** = using reasonable assumptions and simple arithmetic to
 estimate a system's capacity and performance **before** designing the actual infrastructure.
 
@@ -788,3 +808,66 @@ interviewer changes one ("what if media is 20%?"), you only redo the arithmetic.
  100M requests/day  ≈ 1,160 QPS
  1B requests/day    ≈ 11,600 QPS
 ```
+
+---
+
+## 14. Common Mistakes
+
+| # | Mistake | Fix |
+|---|---|---|
+| 1 | Confusing **MB** with **Mb** | Uppercase B = bytes, lowercase b = bits; factor of 8 |
+| 2 | Forgetting to convert **days → seconds** | Always ÷ 86,400 for QPS |
+| 3 | Forgetting **peak** traffic | Size for peak, not average |
+| 4 | Treating **assumptions as facts** | Say "assuming…" every time |
+| 5 | **Overcomplicating** a simple estimate | 3 multiplications beat a spreadsheet |
+| 6 | Chasing **exact numbers** | Round hard; order of magnitude is the goal |
+| 7 | Forgetting the **retention period** | "Per day" is meaningless without "for how long" |
+| 8 | Ignoring **media size** | Media usually dominates storage and bandwidth |
+| 9 | Ignoring the **read/write ratio** | It decides caching, replicas and sharding |
+| 10 | Forgetting **replication/backups** in real storage | Raw × 3 (or more) for the real number |
+| 11 | Confusing **latency** with **throughput** | See below — they're independent |
+| 12 | Treating old **latency reference numbers** as modern benchmarks | They show relative cost, not today's hardware |
+
+---
+
+## 15. Latency vs Throughput
+
+| | Latency | Throughput |
+|---|---|---|
+| Question | How long does **one** operation take? | How much work per unit time? |
+| Unit | ms, μs, ns | requests/sec, MB/s |
+| Felt by | A single user waiting | The system under load |
+| Improved by | Caching, fewer round trips, faster queries, closer servers | More servers/workers, parallelism, batching, bigger pipes |
+
+```
+ Latency:    one request takes 50 ms
+ Throughput: the system handles 1,000 requests/sec
+```
+
+They are **not** the same number and don't move together:
+
+- **Low latency, low throughput** — one fast server that can only handle 10 requests/sec.
+- **High latency, high throughput** — a batch pipeline: each job takes minutes, but millions finish per hour.
+- **Batching** often **raises** throughput while **raising** latency for the individual request.
+- **Adding servers** raises throughput but does **nothing** for a single request's latency.
+
+### Analogy
+
+> A **highway**: latency = how long your car takes to drive the route.
+> Throughput = how many cars pass per minute.
+> Adding lanes moves more cars (throughput) without making any single car faster (latency).
+
+### Related: percentiles
+
+Average latency hides the bad cases — always ask for **p95 / p99**.
+
+```
+ p99 = 500 ms  →  1 in 100 requests is slower than 500 ms
+```
+
+On a page making 10 backend calls, a p99 of 500 ms means many page loads hit at least one
+slow call — which is why tail latency matters more than the average.
+
+> **Memory:**
+> Latency = time per operation.
+> Throughput = operations per time.
