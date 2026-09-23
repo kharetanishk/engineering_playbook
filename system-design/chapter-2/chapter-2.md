@@ -276,3 +276,43 @@ fast your servers are. This is why CDNs and multi-DC deployments exist.
 | **Data locality** | Keep data near the compute that reads it (same DC, same shard, same region) |
 | **Batching** | 1 request for 100 items beats 100 requests for 1 item |
 | **Avoid unnecessary disk access** | Especially **random** access on spinning disks |
+
+---
+
+## 5. CPU Cache vs RAM
+
+```
+ CPU
+ ├── L1   (smallest, fastest, per core)
+ ├── L2   (bigger, slightly slower)
+ └── L3   (biggest cache, shared between cores)
+        ↓
+      RAM        (main memory — GBs)
+        ↓
+    Storage      (SSD / HDD — TBs, survives reboot)
+```
+
+| | CPU cache (L1/L2/L3) | RAM (main memory) |
+|---|---|---|
+| Size | KB → tens of MB | GB |
+| Speed | ~1–20 ns | ~100 ns |
+| Location | Inside the CPU | On the motherboard |
+| Holds | The data being worked on right now | All running programs' data |
+| Cost per byte | Very high | Lower |
+| Persistent? | No | No (both lost on power off) |
+
+The tradeoff is always the same: **smaller and closer = faster and more expensive**.
+
+### Analogy
+
+> **Cache** = the papers **on your desk** — tiny space, grab instantly.
+> **RAM** = the **bookshelf** in the room — much more, a few seconds to walk over.
+> **Disk** = the **storage room down the hall** — huge, but a trip each time.
+> **Network** = a book in **another building** — you have to ask someone to send it.
+
+A **cache hit** = what you need is already on the desk. A **miss** = get up and fetch it.
+The same hit/miss idea repeats at every layer: CPU cache, Redis, CDN.
+
+> **Memory:**
+> Cache = information on your desk.
+> RAM = information in your bookshelf.
