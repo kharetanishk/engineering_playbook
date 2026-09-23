@@ -316,3 +316,56 @@ The same hit/miss idea repeats at every layer: CPU cache, Redis, CDN.
 > **Memory:**
 > Cache = information on your desk.
 > RAM = information in your bookshelf.
+
+---
+
+## 6. Availability
+
+**Availability** = the percentage of time a system is operational and able to serve requests.
+
+```
+ Availability = Uptime / Total time
+
+ Downtime = Total time × (1 - Availability)
+```
+
+Example, over one year (365 days ≈ 8,760 hours):
+
+```
+ Availability = 99.9% = 0.999
+ Downtime = 8,760 h × (1 - 0.999) = 8.76 hours/year
+```
+
+### The "nines"
+
+| Availability | Name | Approx downtime/year | Per month | Per day |
+|---|---|---:|---:|---:|
+| 99% | two nines | 3.65 days | 7.2 hours | 14.4 min |
+| 99.9% | three nines | 8.77 hours | 43.8 min | 1.44 min |
+| 99.99% | four nines | 52.6 minutes | 4.38 min | 8.6 s |
+| 99.999% | five nines | 5.26 minutes | 26 s | 0.86 s |
+| 99.9999% | six nines | 31.56 seconds | 2.6 s | 0.086 s |
+
+Each extra nine = **10× less allowed downtime** — and a big jump in cost and complexity
+(redundancy everywhere, multi-DC, automated failover, no manual recovery steps).
+
+Note that a **single** 10-minute outage already breaks a 99.99% yearly target.
+
+### SLA
+
+**SLA (Service Level Agreement)** = a contract between a provider and its customers stating
+the service level that is promised — typically an availability target, plus penalties or
+credits if it's missed.
+
+Examples: cloud providers commonly publish SLAs like 99.9% or 99.99% for their services.
+
+> An SLA is a **promise**, not a measurement.
+> Actual measured availability can be better or worse than the SLA — the SLA just defines
+> what counts as a breach and what compensation follows.
+
+Related: **SLO** = the internal target a team aims for (usually stricter than the SLA);
+**SLI** = the metric actually measured (e.g. % of successful requests).
+
+> **Memory:**
+> Availability = uptime percentage.
+> More 9s = less downtime.
