@@ -583,3 +583,112 @@ logging/analytics ingestion can be write-heavy instead.
 
 Rule: **reads scale with copies** (cache, replicas, CDN); **writes scale with partitions**
 (sharding, queues).
+
+---
+
+## 11. Worked Example — Twitter-Style Service
+
+> ⚠️ These are **exercise assumptions for practice**, not real statistics about any company.
+
+### Assumptions
+
+| Assumption | Value |
+|---|---|
+| Monthly active users (MAU) | 300M |
+| Share who are daily active | 50% |
+| Tweets per user per day | 2 |
+| Tweets containing media | 10% |
+| Average media size | 1 MB |
+| Retention | 5 years |
+| Peak multiplier | 2× |
+
+### Step 1 — Daily Active Users
+
+**DAU (Daily Active Users)** = users who use the app on a given day.
+
+```
+ 300M MAU × 50% = 150M DAU
+```
+
+### Step 2 — Tweets per day
+
+```
+ 150M DAU × 2 tweets = 300M tweets/day
+```
+
+### Step 3 — Average QPS
+
+```
+ 300M ÷ 86,400 ≈ 3,500 QPS
+```
+
+We divide by **86,400** because that's the number of seconds in a day
+(24 h × 60 min × 60 s). Dividing a per-day number by it gives the per-second rate,
+spread evenly across the whole day.
+
+### Step 4 — Peak QPS
+
+```
+ 3,500 × 2 ≈ 7,000 QPS
+```
+
+Traffic clusters in waking hours, so the peak is higher than the average. The **2× is an
+assumption for this exercise** — a different multiplier is equally defensible if stated.
+
+Note: this is **write** QPS (tweets posted). Read QPS (timelines viewed) would be far
+higher — easily 100× — which is the real driver of the design.
+
+### Step 5 — Media tweets per day
+
+```
+ 300M tweets × 10% = 30M media tweets/day
+```
+
+### Step 6 — Media storage per day
+
+```
+ 30M × 1 MB = 30M MB ≈ 30 TB/day
+```
+
+(1M MB = 1 TB.) Text is tiny by comparison: 300M × ~300 bytes ≈ 90 GB/day, ~0.3% of the media.
+
+### Step 7 — Five-year storage
+
+```
+ 30 TB × 365 × 5 ≈ 54,750 TB ≈ 55 PB
+```
+
+And that's **before** replication and backups — with 3 copies it's ~165 PB.
+
+### Full flow
+
+```
+ 300M MAU
+   ↓ × 50%
+ 150M DAU
+   ↓ × 2 tweets
+ 300M tweets/day
+   ↓ ÷ 86,400
+ ~3,500 QPS (average)
+   ↓ × 2 (peak assumption)
+ ~7,000 QPS (peak)
+```
+
+```
+ 300M tweets/day
+   ↓ × 10% media
+ 30M media tweets/day
+   ↓ × 1 MB
+ 30 TB/day
+   ↓ × 365 × 5
+ ~55 PB (5-year media storage)
+```
+
+### What the numbers tell the design
+
+| Number | Implication |
+|---|---|
+| ~7,000 peak write QPS | Beyond one DB — shard writes, buffer with a queue |
+| Read QPS far higher | Heavy caching + read replicas + fan-out on write |
+| 30 TB/day media | Object storage (S3-style) + CDN, not the main database |
+| ~55 PB over 5 years | Retention policy, tiered/cold storage, compression matter a lot |
