@@ -179,3 +179,100 @@ Useful for estimation:
 > ns → extremely small (CPU-level)
 > μs → micro (memory-level)
 > ms → milliseconds (disk and network level, what users feel)
+
+---
+
+## 4. Latency Numbers
+
+Purpose: know **how expensive** each kind of operation is **relative to the others**, so you
+can guess where time goes without measuring.
+
+> ⚠️ The numbers below are the classic reference values (Jeff Dean's list, used in the book).
+> They are **old** — modern CPUs, NVMe SSDs and networks differ, sometimes by a lot.
+> Treat them as **orders of magnitude**, not as benchmarks of current hardware.
+
+| Operation | Reference latency | What it actually means |
+|---|---:|---|
+| L1 cache reference | ~0.5 ns | CPU reads data from its smallest, closest cache |
+| Branch misprediction | ~5 ns | CPU guessed the wrong `if` path and must discard work and restart |
+| L2 cache reference | ~7 ns | CPU reads from the next cache level — bigger, slightly slower than L1 |
+| Mutex lock/unlock | ~100 ns | Taking and releasing a lock so only one thread enters a critical section |
+| Main memory (RAM) reference | ~100 ns | CPU reads data from main memory — a cache miss |
+| Compress 1 KB (Zippy/Snappy) | ~10 μs | CPU work to shrink 1 KB of data before storing/sending it |
+| Send 2 KB over 1 Gbps network | ~20 μs | Pushing a small payload onto the wire |
+| Read 1 MB sequentially from memory | ~250 μs | Streaming a megabyte that's already in RAM |
+| Round trip within same data center | ~500 μs | Request to another server in the same DC **and** its reply back |
+| Disk seek (HDD) | ~10 ms | Mechanical head moves to the right track/position |
+| Read 1 MB sequentially from network | ~10 ms | Pulling a megabyte across the network |
+| Read 1 MB sequentially from disk | ~30 ms | Streaming a megabyte off spinning disk |
+| Round trip across continents | ~150 ms | e.g. California ↔ Netherlands and back |
+
+### What some of these mean
+
+**L1 / L2 cache** — small, very fast memory built into the CPU. The CPU looks here first;
+a hit costs nanoseconds. L1 is smallest and fastest, then L2, then L3.
+
+**RAM (main memory)** — where running programs keep their data. Much bigger than cache,
+but a read costs ~100× an L1 hit. Every cache miss ends up here.
+
+**Disk seek** — on an **HDD**, the read/write head physically moves to the track holding
+the data. Physical movement is why it costs milliseconds.
+
+> **Seek ≠ read.**
+> Seek = **locating / positioning** (finding where the data is).
+> Read = **actually retrieving** the bytes.
+> A random read = seek + read; a sequential read pays the seek once and then streams.
+>
+> **SSDs have no moving head**, so HDD seek numbers must not be used as modern SSD
+> benchmarks. SSD random access is roughly microseconds-to-tens-of-microseconds, not ~10 ms.
+
+**Same-data-center round trip**
+
+```
+ Server A
+   │  request  (network hop)
+   ▼
+ Server B
+   │  response (network hop)
+   ▼
+ Server A
+```
+
+**Round trip = request there + response back.** One extra service call adds a full round
+trip, which is why chatty microservices get slow.
+
+**Long-distance network** — a signal can't beat the speed of light, plus it passes through
+routers, switches and undersea cables. Continents apart ≈ 150 ms round trip, no matter how
+fast your servers are. This is why CDNs and multi-DC deployments exist.
+
+### Rough hierarchy
+
+```
+ CPU cache          ns
+    ↓
+ RAM                ns → μs
+    ↓
+ Storage (disk)     μs (SSD) → ms (HDD)
+    ↓
+ Network (same DC)  μs → ms
+    ↓
+ Long-distance net  ~100 ms
+```
+
+> This is a **rule of thumb**, not an exact universal ordering — a fast NVMe read can beat
+> a slow same-DC round trip, and workloads vary.
+
+**Key lesson:**
+
+> Local memory is extremely fast; storage and especially network operations can be
+> orders of magnitude more expensive.
+
+### Why it matters in design
+
+| Idea | Because |
+|---|---|
+| **Caching** | Serving from memory avoids disk and network entirely |
+| **Fewer network calls** | Each call costs at least one round trip; N+1 calls kill latency |
+| **Data locality** | Keep data near the compute that reads it (same DC, same shard, same region) |
+| **Batching** | 1 request for 100 items beats 100 requests for 1 item |
+| **Avoid unnecessary disk access** | Especially **random** access on spinning disks |
