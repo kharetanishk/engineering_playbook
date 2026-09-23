@@ -369,3 +369,68 @@ Related: **SLO** = the internal target a team aims for (usually stricter than th
 > **Memory:**
 > Availability = uptime percentage.
 > More 9s = less downtime.
+
+---
+
+## 7. QPS
+
+**QPS** = **Queries Per Second**. Often used interchangeably with **RPS** (requests per
+second) — "query" for databases/search, "request" for APIs. Same math either way.
+
+### Core conversion
+
+```
+ Average QPS = Requests per day ÷ 86,400
+
+ because 24 × 60 × 60 = 86,400 seconds in a day
+```
+
+Example:
+
+```
+ 864,000 requests/day ÷ 86,400 = 10 QPS
+```
+
+More:
+
+| Requests/day | Average QPS |
+|---|---:|
+| 86,400 | 1 |
+| 1,000,000 | ~12 |
+| 100,000,000 | ~1,160 |
+| 1,000,000,000 | ~11,600 |
+
+### Average vs peak QPS
+
+Traffic is **not** spread evenly over 24 hours:
+
+```
+ QPS
+  │             ▁▃▅███▅▃▁
+  │        ▁▃▅██        ██▅▃▁
+  │   ▁▃▅██                  ██▅▃▁
+  └──────────────────────────────────── time of day
+   night      morning   evening peak   night
+```
+
+- Users sleep, work, and browse at the same times.
+- Regional concentration, launches, notifications and events all create spikes.
+
+Capacity must be planned for the **peak**, not the average — otherwise the system falls
+over exactly when it's busiest.
+
+```
+ Peak QPS = Average QPS × peak multiplier
+```
+
+Example:
+
+```
+ Average QPS   = 3,500
+ Peak multiplier = 2
+ Peak QPS      ≈ 7,000
+```
+
+> ⚠️ The peak multiplier is an **assumption**, not a universal constant.
+> 2× is a common interview default. Real systems vary — a global app may be flatter (~1.5×),
+> a regional or event-driven one much spikier (5–10×). State the number you're assuming.
