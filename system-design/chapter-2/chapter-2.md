@@ -692,3 +692,99 @@ And that's **before** replication and backups — with 3 copies it's ~165 PB.
 | Read QPS far higher | Heavy caching + read replicas + fan-out on write |
 | 30 TB/day media | Object storage (S3-style) + CDN, not the main database |
 | ~55 PB over 5 years | Retention policy, tiered/cold storage, compression matter a lot |
+
+---
+
+## 12. Estimation Workflow
+
+A reusable order to follow in an interview.
+
+| Step | Do this | Example |
+|---|---|---|
+| 1 | **Clarify requirements** — what are we estimating and why? | "Write-heavy or read-heavy? Media included?" |
+| 2 | **State assumptions** out loud | "300M MAU, 50% daily active" |
+| 3 | **Estimate DAU** | 300M × 50% = 150M |
+| 4 | **Actions per day** | 150M × 2 = 300M tweets/day |
+| 5 | **Convert to QPS** | 300M ÷ 86,400 ≈ 3,500 |
+| 6 | **Peak QPS** | 3,500 × 2 ≈ 7,000 |
+| 7 | **Data generated per day** | 30M media × 1 MB = 30 TB/day |
+| 8 | **Total storage** | 30 TB × 365 × 5 ≈ 55 PB |
+| 9 | **Bandwidth** | QPS × payload size, then × 8 for bits |
+| 10 | **Apply replication / backups / growth** | ×3 replicas → ~165 PB |
+| 11 | **Use results to shape the architecture** | Shard the DB, cache reads, CDN for media |
+
+```
+ Requirements
+     ↓
+ Assumptions
+     ↓
+ DAU
+     ↓
+ Requests/day
+     ↓
+ QPS
+     ↓
+ Peak QPS
+     ↓
+ Storage + Bandwidth
+     ↓
+ Infrastructure
+```
+
+Tip: write the assumptions in a corner of the whiteboard and keep them visible. When the
+interviewer changes one ("what if media is 20%?"), you only redo the arithmetic.
+
+---
+
+## 13. Conversion Cheat Sheet
+
+**Time**
+
+```
+ 1 hour  =  3,600 seconds
+ 1 day   = 86,400 seconds
+ 1 month ≈ 2.6M seconds
+ 1 year  ≈ 31.5M seconds
+
+ 1 s  = 1,000 ms
+ 1 ms = 1,000 μs
+ 1 μs = 1,000 ns
+```
+
+**Storage**
+
+```
+ 1 byte = 8 bits
+
+ 2^10 ≈ 1K  → 1 KB
+ 2^20 ≈ 1M  → 1 MB
+ 2^30 ≈ 1G  → 1 GB
+ 2^40 ≈ 1T  → 1 TB
+ 2^50 ≈ 1P  → 1 PB
+
+ 1M KB = 1 GB     1M MB = 1 TB     1M GB = 1 PB
+```
+
+**Network**
+
+```
+ 1 byte = 8 bits
+ MB/s × 8 = Mbps
+ Mbps ÷ 8 = MB/s
+ 1 Gbps ≈ 125 MB/s
+```
+
+**QPS**
+
+```
+ Average QPS = requests/day ÷ 86,400
+ Peak QPS    = average QPS × peak multiplier (assumption, often 2)
+```
+
+**Common shortcuts**
+
+```
+ 1M requests/day    ≈    12 QPS
+ 100M requests/day  ≈ 1,160 QPS
+ 1B requests/day    ≈ 11,600 QPS
+```
