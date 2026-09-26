@@ -105,3 +105,41 @@ What to do:
 Notice: only questions, no design yet. The answers set the scope for everything after.
 
 > **Understand before designing.**
+
+---
+
+## 4. Step 2 — High-Level Design
+
+Produce an initial blueprint and check it with the interviewer.
+
+- Keep it **high level** — the big picture, not the details.
+- Think out loud so the interviewer can follow and steer.
+- Draw a simple diagram when it helps.
+- Ask for feedback; treat the interviewer as a teammate, not an examiner.
+- Get agreement on the approach **before** going deeper.
+- Do a quick back-of-the-envelope estimate if the scale affects the approach (see Chapter 2).
+
+How much API or data-model detail to include depends on the scope of the interview.
+When unsure, ask.
+
+> **Draw the big picture before diving into details.**
+
+---
+
+## 5. Step 3 — Deep Dive
+
+By now you and the interviewer have agreed on the overall shape. Use the remaining time
+on the parts that matter most.
+
+- Identify the most important components.
+- Prioritize using the requirements and the interviewer's feedback.
+- Go into important details, look for bottlenecks, and discuss tradeoffs.
+- Spend time on areas that show engineering judgment.
+- Skip unnecessary detail.
+
+The interviewer may steer you to a specific area — follow their lead. Otherwise, pick
+what is riskiest or most relevant to the requirements.
+
+> **Not every component deserves equal depth.**
+>
+> **Deep dive where it matters.**
