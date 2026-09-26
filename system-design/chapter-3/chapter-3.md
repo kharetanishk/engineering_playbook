@@ -143,3 +143,111 @@ what is riskiest or most relevant to the requirements.
 > **Not every component deserves equal depth.**
 >
 > **Deep dive where it matters.**
+
+---
+
+## 6. Step 4 — Wrap Up
+
+Use the last few minutes to step back and evaluate your own work.
+
+- Summarize the design briefly.
+- Point out bottlenecks and possible improvements.
+- Discuss failure and error cases at a high level.
+- Mention monitoring and operational concerns at a high level.
+- Say how the design could handle the next order of magnitude of growth.
+- Note what you would improve with more time.
+- Never claim the design is perfect.
+
+> **Critique your own design.**
+
+---
+
+## 7. Dos and Don'ts
+
+### DO
+
+- Ask clarifying questions.
+- Understand requirements.
+- State assumptions.
+- Think out loud.
+- Communicate continuously.
+- Ask for feedback.
+- Suggest alternatives when useful.
+- Prioritize critical areas.
+- Discuss tradeoffs.
+- Manage time.
+
+### DON'T
+
+- Jump into a solution immediately.
+- Assume requirements.
+- Over-engineer.
+- Dive too deeply too early.
+- Think silently for long periods.
+- Get stuck on one component.
+- Claim the design is perfect.
+- Give up when stuck.
+- Ignore interviewer feedback.
+
+---
+
+## 8. Time Management
+
+Rough split for a 45-minute interview:
+
+| Step | Time |
+|---|---:|
+| Understand problem | 3–10 min |
+| High-level design | 10–15 min |
+| Deep dive | 10–25 min |
+| Wrap up | 3–5 min |
+
+> These are rough guidelines, not strict rules.
+
+Actual allocation depends on:
+
+- Problem scope
+- The interviewer
+- Candidate level
+- Direction of the discussion
+
+---
+
+## 9. Core Mental Models
+
+1. **Clarify → Design → Deep Dive → Critique**
+2. **Requirements before architecture.**
+3. **Big picture before details.**
+4. **Communicate your thinking instead of thinking silently.**
+5. **Optimize for useful discussion, not design perfection.**
+
+---
+
+## 10. Interview Cheat Sheet
+
+| Question | Answer |
+|---|---|
+| Goal of the interview? | Show how you solve an ambiguous problem and collaborate, not deliver a perfect design. |
+| Before designing? | Ask questions, clarify scope and scale, and write down your assumptions. |
+| During high-level design? | Sketch the big picture, think aloud, and get the interviewer's agreement before going deeper. |
+| How to pick a deep-dive area? | Follow the interviewer's hints, else choose what is most critical to the requirements. |
+| What to discuss at the end? | Bottlenecks, failure cases, monitoring, next-scale growth, and what you'd improve. |
+| Common red flags? | Over-engineering, stubbornness, jumping to conclusions, poor communication, low-value detail. |
+| If you get stuck? | Say so, explain your thinking, and ask for a hint — don't go silent or give up. |
+| Why does communication matter? | The interviewer can only evaluate reasoning they can hear, and it shows you'd be a good teammate. |
+
+---
+
+# Chapter 3 — 2-Minute Revision
+
+```text
+1. Clarify requirements.
+2. State assumptions.
+3. Create high-level design.
+4. Get interviewer buy-in.
+5. Deep dive into critical areas.
+6. Discuss tradeoffs.
+7. Manage time.
+8. Wrap up with bottlenecks + improvements.
+9. Communicate throughout.
+```
