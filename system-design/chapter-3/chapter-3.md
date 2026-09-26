@@ -47,3 +47,61 @@ count as much as technical knowledge.
 - Jumping to conclusions
 - Poor communication
 - Spending too much time on low-value details
+
+---
+
+## 2. The 4-Step Framework
+
+1. Understand the problem and establish design scope
+2. Propose a high-level design and get buy-in
+3. Design deep dive
+4. Wrap up
+
+### Mental model
+
+```
+Clarify
+   ↓
+Design
+   ↓
+Deep Dive
+   ↓
+Critique
+```
+
+---
+
+## 3. Step 1 — Understand the Problem
+
+Do **not** start solving. The urge to answer fast is the most common trap; a quick wrong
+answer is worse than a slow right one.
+
+What to do:
+
+- Ask questions until the requirements are clear.
+- Identify assumptions and **write them down** so you can refer back to them.
+- Pin down scale, scope, and constraints.
+
+### Useful question categories
+
+| Category | Example question |
+|---|---|
+| Features | What are the must-have features? |
+| Users | Who uses it? |
+| Volume | How many users? |
+| Scale | What traffic do we expect? |
+| Growth | How fast will it grow in 3 months / 1 year / 3 years? |
+| Platforms | Web, mobile, or both? |
+| Constraints | Any tech stack, budget, or team limits? |
+| Reuse | Can we build on existing services? |
+
+### Example: how a candidate clarifies (news feed prompt)
+
+- "Is this mobile, web, or both?"
+- "What are the most important features?"
+- "How many users, and how many are active daily?"
+- "Do we expect the number of users to grow quickly?"
+
+Notice: only questions, no design yet. The answers set the scope for everything after.
+
+> **Understand before designing.**
