@@ -149,3 +149,27 @@ Tools that automate issuing, renewing, and installing TLS certificates:
 - **Envoy Gateway**
 - **Tyk**
 - **Azure API Management**
+
+---
+
+## 10. API Gateway vs Service Mesh
+
+- **API Gateway** — sits at the edge, handles **north-south** traffic (outside clients
+  calling into the system).
+- **Service Mesh** — sits between internal services, handles **east-west** traffic
+  (service-to-service calls), e.g. retries, internal routing, mTLS.
+
+> **Memory:** gateway = front door for outsiders; mesh = hallways between rooms inside.
+
+---
+
+## 11. When to Use or Build a Custom API Gateway
+
+- Use an **existing gateway** for standard needs: rate limiting, auth, routing, TLS.
+- **Build/customize** only when there's a specialized requirement an existing gateway
+  can't meet (unusual protocol, very specific business logic at the edge, etc.).
+
+## 12. Principle
+
+> Use an existing API Gateway by default. Only customize or build your own when you have
+> a specialized requirement that off-the-shelf gateways don't cover.
