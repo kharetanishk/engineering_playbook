@@ -66,3 +66,38 @@ Client → API Gateway → Backend Service
 
 > **Memory:** the API Gateway is the front desk — it checks your ID and your appointment
 > slot before letting you into the building.
+
+---
+
+## 5. TLS / SSL
+
+- **SSL** is the older protocol; **TLS** is its modern successor. In practice "SSL" is
+  often used loosely to mean TLS.
+- **HTTPS = HTTP + TLS** — same HTTP semantics, encrypted in transit.
+- **TLS termination** — the point (often the API Gateway or load balancer) where
+  encrypted traffic is decrypted. Traffic can then travel as plain HTTP internally.
+- **TLS re-encryption** — after termination, the gateway opens a *new* TLS connection to
+  the backend, so traffic is encrypted again for the next hop.
+
+```
+Client --TLS--> Gateway --(plain or re-encrypted TLS)--> Backend
+              (termination)
+```
+
+> **Memory:** TLS termination = take off the envelope at the door; re-encryption = put it
+> in a new envelope for the next leg.
+
+---
+
+## 6. TLS Certificates
+
+- A **certificate** proves the server's identity (like an ID card) — it says "this server
+  is really who it claims to be."
+- A certificate is **not encryption itself** — it enables trust and key exchange during
+  the handshake, but the actual traffic is protected by session keys negotiated afterward.
+- **CA (Certificate Authority)** — issues and signs the certificate.
+- **Certificate manager** — automates requesting, renewing, and installing certificates.
+- **Server** — presents the certificate to clients; it doesn't issue or sign it.
+
+> **Memory:** CA = the passport office, certificate manager = the assistant who renews
+> your passport, server = the person showing the passport.
