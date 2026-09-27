@@ -27,3 +27,42 @@ Once the limit is hit, extra requests are rejected (usually `HTTP 429 Too Many R
 - **High fault tolerance** — if the rate limiter itself fails, it should fail in a safe way (not take the whole system down).
 
 > **Memory:** accurate, fast, cheap, shared, clear, resilient.
+
+---
+
+## 3. Client-Side vs Server-Side Rate Limiting
+
+- **Client-side** — the client throttles its own requests. Easy to bypass (a malicious or
+  buggy client just ignores it), so it can't be trusted for protection.
+- **Server-side** — the server (or a gateway in front of it) enforces the limit. This is
+  the trustworthy place to enforce limits, since the client doesn't control it.
+
+> **Memory:** never trust the client to rate-limit itself — enforce it server-side.
+
+---
+
+## 4. API Gateway
+
+**Definition:** a single entry point that sits in front of backend services and handles
+cross-cutting concerns before a request reaches business logic.
+
+**Responsibilities:**
+
+- Rate limiting
+- Authentication
+- TLS termination
+- Routing requests to the right service
+- Logging / metrics
+
+**Simple request flow:**
+
+```
+Client → API Gateway → Backend Service
+           |
+           +-- rate limit check
+           +-- auth check
+           +-- TLS termination
+```
+
+> **Memory:** the API Gateway is the front desk — it checks your ID and your appointment
+> slot before letting you into the building.
