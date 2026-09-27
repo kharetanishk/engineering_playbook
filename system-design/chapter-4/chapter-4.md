@@ -101,3 +101,51 @@ Client --TLS--> Gateway --(plain or re-encrypted TLS)--> Backend
 
 > **Memory:** CA = the passport office, certificate manager = the assistant who renews
 > your passport, server = the person showing the passport.
+
+---
+
+## 7. TLS Handshake
+
+The handshake happens once, when a connection starts:
+
+1. **Server authentication** — client checks the server's certificate against a trusted CA.
+2. **Key establishment** — client and server agree on session keys used to encrypt the
+   rest of the conversation.
+
+```
+Client                      Server
+   |--- Hello ---------------->|
+   |<-- Certificate -----------|
+   | (verify cert against CA)  |
+   |--- agree on session keys->|
+   |<==== encrypted traffic ==>|
+```
+
+> **Memory:** the handshake proves *who* you're talking to, then agrees on a *secret*
+> for the rest of the chat.
+
+---
+
+## 8. Certificate Managers
+
+Tools that automate issuing, renewing, and installing TLS certificates:
+
+- **cert-manager** (Kubernetes)
+- **AWS Certificate Manager**
+- **Google Cloud Certificate Manager**
+- **HashiCorp Vault**
+- **Azure Key Vault**
+- **Venafi**
+
+---
+
+## 9. API Gateway Examples
+
+- **Kong**
+- **AWS API Gateway**
+- **Apigee**
+- **NGINX**
+- **Traefik**
+- **Envoy Gateway**
+- **Tyk**
+- **Azure API Management**
