@@ -221,3 +221,29 @@ requests -> [ queue: FIFO, fixed size ] -> leaks out at fixed rate -> processed
 - **Memory efficient:** the queue has a fixed max size, so worst-case memory is bounded.
 
 > **Memory:** Leaky Bucket = queue requests → process them at a fixed rate.
+
+### 13.3 Fixed Window Counter
+
+- Divide time into **fixed windows** (e.g. every 1-minute clock boundary).
+- Maintain a **counter** for each window.
+- Each request **increments the counter**.
+- Once the limit is reached, further requests are **rejected until the next window**.
+- At the next window, the **counter resets to 0**.
+
+- **Pros:** simple, memory efficient (one counter per window).
+- **Main problem: boundary burst.**
+
+**Boundary example:** limit = 5 requests/minute.
+
+```
+window 1 [00:00 - 00:59]         window 2 [01:00 - 01:59]
+                    5 requests |5 requests
+                          ^ 00:59            ^ 01:00
+```
+
+5 requests arrive right before `00:59` (end of window 1) and 5 more arrive right after
+`01:00` (start of window 2). Each window individually stays within its 5/minute limit —
+but the rolling one-minute period spanning `00:30`–`01:30` actually saw **10 requests**.
+A rolling window can straddle two fixed windows, letting bursts slip through.
+
+> **Memory:** Fixed Window = fixed time box + counter + reset.
