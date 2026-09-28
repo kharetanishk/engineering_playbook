@@ -247,3 +247,42 @@ but the rolling one-minute period spanning `00:30`–`01:30` actually saw **10 r
 A rolling window can straddle two fixed windows, letting bursts slip through.
 
 > **Memory:** Fixed Window = fixed time box + counter + reset.
+
+### 13.4 Sliding Window Counter
+
+- A **hybrid** of Fixed Window Counter and Sliding Window Log.
+- **Rolling window** = "look backward a fixed amount of time from NOW."
+- A rolling window can **overlap parts of two fixed windows** (the tail of the previous
+  one and the head of the current one).
+- Estimates the request count as:
+
+```
+estimated count = current window requests + (previous window requests × overlap %)
+```
+
+**Example:** limit = 7 requests/minute, previous window = 5 requests, current window = 3
+requests, current position in window = 30% elapsed → previous window overlap = 70%.
+
+```
+estimated count = 3 + (5 × 0.7) = 6.5  → round down to 6
+6 < 7  →  request allowed
+```
+
+- The 70% overlap exists because we're only 30% into the current window, so 70% of "now
+  looking back one minute" still falls inside the previous window.
+- Assumes requests in the previous window were **evenly distributed** — it's an
+  **approximation**, not an exact count.
+
+- **Pros:** memory efficient (still just two counters), smoother than fixed window.
+- **Cons:** not perfectly accurate for strict look-back windows.
+
+> **Memory:** Sliding Window Counter = previous counter × overlap + current counter.
+
+### 13.5 Comparison
+
+| Algorithm              | Main idea                          | Burst handling                          | Memory              | Main drawback                          |
+|-------------------------|-------------------------------------|------------------------------------------|----------------------|------------------------------------------|
+| Token Bucket            | Tokens refill, request consumes one | Allows bursts up to bucket size          | Very low (count + timestamp) | Burst can still hit downstream at once |
+| Leaky Bucket            | FIFO queue drained at fixed rate    | Smooths bursts into steady outflow       | Low (bounded queue)  | Bursts fill queue, delay/reject newer requests |
+| Fixed Window Counter    | Counter per fixed time window       | Poor — boundary burst (2x limit possible) | Very low (one counter) | Boundary burst                          |
+| Sliding Window Counter  | Weighted blend of two window counters | Good approximation, smooths boundary    | Low (two counters)   | Approximation, not exact for strict windows |
