@@ -286,3 +286,5 @@ estimated count = 3 + (5 × 0.7) = 6.5  → round down to 6
 | Leaky Bucket            | FIFO queue drained at fixed rate    | Smooths bursts into steady outflow       | Low (bounded queue)  | Bursts fill queue, delay/reject newer requests |
 | Fixed Window Counter    | Counter per fixed time window       | Poor — boundary burst (2x limit possible) | Very low (one counter) | Boundary burst                          |
 | Sliding Window Counter  | Weighted blend of two window counters | Good approximation, smooths boundary    | Low (two counters)   | Approximation, not exact for strict windows |
+
+---
