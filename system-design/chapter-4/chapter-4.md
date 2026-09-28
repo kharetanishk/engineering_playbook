@@ -173,3 +173,32 @@ Tools that automate issuing, renewing, and installing TLS certificates:
 
 > Use an existing API Gateway by default. Only customize or build your own when you have
 > a specialized requirement that off-the-shelf gateways don't cover.
+
+---
+
+## 13. Rate Limiting Algorithms
+
+### 13.1 Token Bucket
+
+- Bucket has a fixed **max capacity**.
+- Tokens are added at a fixed **refill rate**.
+- Each request consumes **one token**.
+- Token available → request allowed. No token → request rejected.
+- **Bucket size controls burst capacity**; **refill rate controls sustained rate**.
+
+```
+[ capacity: 10 ]
+[ ●●●●●○○○○○ ]  <- tokens, refilled over time
+     |
+  request consumes 1 token
+```
+
+**Why memory efficient:** it only stores a token count and last-refill timestamp per
+bucket — not a log of every request. Multiple logical buckets (per user, per IP, per
+endpoint) can exist, but each one is tiny.
+
+**Burst example:** bucket capacity = 10, refill = 1 token/sec. If no requests come in for
+10 seconds, the bucket fills to 10 — the client can then fire 10 requests instantly (a
+burst), then must wait for refills.
+
+> **Memory:** Bucket size = burst capacity | Refill rate = sustained request rate
