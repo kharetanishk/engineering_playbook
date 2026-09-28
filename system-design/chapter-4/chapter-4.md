@@ -202,3 +202,22 @@ endpoint) can exist, but each one is tiny.
 burst), then must wait for refills.
 
 > **Memory:** Bucket size = burst capacity | Refill rate = sustained request rate
+
+### 13.2 Leaky Bucket
+
+- Requests are placed into a **FIFO queue**.
+- If the queue is full, new requests are **rejected**.
+- Requests **leave the queue at a fixed rate** (processed one at a time, steadily).
+- **Bucket size = queue capacity**; **outflow rate = requests processed per unit time**.
+
+```
+requests -> [ queue: FIFO, fixed size ] -> leaks out at fixed rate -> processed
+              (full? reject new ones)
+```
+
+- **Benefit:** smooth, stable outflow — downstream never sees a burst.
+- **Drawback:** a burst can fill the queue, so newer requests wait or get rejected even if
+  they'd otherwise be within a longer-term average.
+- **Memory efficient:** the queue has a fixed max size, so worst-case memory is bounded.
+
+> **Memory:** Leaky Bucket = queue requests → process them at a fixed rate.
